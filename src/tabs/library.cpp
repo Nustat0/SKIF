@@ -2286,12 +2286,53 @@ Cache=false)";
     GameMenu = PopupState_Open;
   }
 
-  if (pApp->extended_config.vac.enabled == 1)
+  bool dgvoodooNotFound = false;
+
+  if ( pApp->specialk.injection.injection.entry_pt == InjectionPoint::D3D8)
+  {
+    dgvoodooNotFound = GetFileAttributesW (
+      SK_FormatStringW (
+        LR"(%ws\PlugIns\ThirdParty\dgVoodoo\D3D8.dll)",
+        _path_cache.specialk_install
+      ).c_str ()
+    ) == INVALID_FILE_ATTRIBUTES;
+  }
+
+  else if (pApp->specialk.injection.injection.entry_pt == InjectionPoint::DDraw)
+  {
+    bool d3dimmNotFound = GetFileAttributesW (
+      SK_FormatStringW (
+        LR"(%ws\PlugIns\ThirdParty\dgVoodoo\D3DImm.dll)",
+        _path_cache.specialk_install
+      ).c_str ()
+    ) == INVALID_FILE_ATTRIBUTES;
+
+    bool ddrawNotFound = GetFileAttributesW (
+      SK_FormatStringW (
+        LR"(%ws\PlugIns\ThirdParty\dgVoodoo\DDraw.dll)",
+        _path_cache.specialk_install
+      ).c_str ()
+    ) == INVALID_FILE_ATTRIBUTES;
+
+    dgvoodooNotFound = d3dimmNotFound || ddrawNotFound;
+  }
+
+  if (pApp->extended_config.vac.enabled == 1 || dgvoodooNotFound)
   {
     ImGui::SameLine ( );
     ImGui::SetCursorPosY (50.0f + ImGui::GetStyle().FramePadding.y * SKIF_ImGui_GlobalDPIScale);
     ImGui::TextColored (ImGui::GetStyleColorVec4 (ImGuiCol_SKIF_Warning), ICON_FA_TRIANGLE_EXCLAMATION); // ImColor::HSV(0.11F, 1.F, 1.F)
-    SKIF_ImGui_SetHoverTip ("Warning: VAC protected game; injection is not recommended!");
+
+    if (pApp->extended_config.vac.enabled == 1)
+    {
+      SKIF_ImGui_SetHoverTip ("Warning: VAC protected game; injection is not recommended!");
+    }
+
+    else
+    {
+      SKIF_ImGui_SetHoverTip ("Warning: dgVoodoo is required for Direct3D 2-8 / DirectDraw support!\n"
+                              "Please install its DLLs to 'Special K\\PlugIns\\ThirdParty\\dgVoodoo'.");
+    }
   }
 
   ImGui::EndChildFrame ();
